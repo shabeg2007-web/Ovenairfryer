@@ -96,8 +96,7 @@ const faqs = [
     </div>
   </div>
 
-  <script type="application/ld+json">
-    {JSON.stringify(
+<script type="application/ld+json" set:html={JSON.stringify(
       {
         '@context': 'https://schema.org',
         '@type': 'FAQPage',
@@ -112,6 +111,5 @@ const faqs = [
       },
       null,
       2
-    )}
-  </script>
+    )}></script>
 </section>

@@ -1,0 +1,43 @@
+@config "../../tailwind.config.js";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  @apply bg-canvas-soft text-ink font-sans antialiased;
+}
+
+::selection {
+  background: #171717;
+  color: #f2f2f2;
+}
+
+/* Focus ring: premium + accessible */
+:focus-visible {
+  outline: 2px solid rgba(0, 112, 243, 0.9);
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling for anchor links (table printable anchors) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Utility class for stacked hairline separators */
+.hairline-top {
+  border-top: 1px solid #ebebeb;
+}

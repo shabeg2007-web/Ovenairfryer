@@ -1,0 +1,46 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./src/**/*.{astro,html,js,jsx,ts,tsx,vue,svelte}'],
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Geist', 'Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', 'sans-serif'],
+        mono: ['Geist Mono', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'monospace'],
+      },
+      boxShadow: {
+        geist: '0px 1px 1px rgba(0,0,0,0.05), 0px 2px 2px rgba(0,0,0,0.10)',
+      },
+      colors: {
+        primary: '#171717',
+        'on-primary': '#ffffff',
+        ink: '#171717',
+        body: '#4d4d4d',
+        mute: '#888888',
+        hairline: '#ebebeb',
+        'hairline-strong': '#a1a1a1',
+        canvas: '#ffffff',
+        'canvas-soft': '#fafafa',
+        'canvas-soft-2': '#f5f5f5',
+        link: '#0070f3',
+        'link-deep': '#0761d1',
+        'link-bg-soft': '#d3e5ff',
+        success: '#0070f3',
+        error: '#ee0000',
+        'error-soft': '#f7d4d6',
+        'error-deep': '#c50000',
+        warning: '#f5a623',
+        'warning-soft': '#ffefcf',
+        'warning-deep': '#ab570a',
+        violet: '#7928ca',
+        'violet-soft': '#d8ccf1',
+        'violet-deep': '#4c2889',
+        cyan: '#50e3c2',
+        'cyan-soft': '#aaffec',
+        'cyan-deep': '#29bc9b',
+        'highlight-pink': '#ff0080',
+        'highlight-magenta': '#eb367f',
+      },
+    },
+  },
+  plugins: [],
+};

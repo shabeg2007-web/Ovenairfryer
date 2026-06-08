@@ -1,0 +1,46 @@
+---
+const tips = [
+	{
+		title: 'Why air fryers cook faster',
+		body: 'Air fryers circulate hot air around food, so heat reaches the surface quickly. That means shorter cook times—especially for smaller cuts and preheated foods.',
+	},
+	{
+		title: 'Should you reduce cooking time?',
+		body: 'Yes—start with about 20% less time, then check doneness early. Most foods finish faster, but your specific model and starting temperature still matter.',
+	},
+	{
+		title: 'Common mistakes to avoid',
+		body: 'Overcrowding blocks airflow. Skipping preheating can slow browning. Also: don’t rely on color alone—use a thermometer for safety-critical meats.',
+	},
+];
+---
+
+<section id="tips" class="bg-canvas-soft">
+  <div class="mx-auto max-w-7xl px-6 py-16 md:py-24">
+    <div class="flex items-end justify-between gap-6">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Smart cooking tips</div>
+        <h2 class="mt-3 font-display text-display-md tracking-[-0.96px] text-ink">Convert with confidence</h2>
+        <p class="mt-4 max-w-2xl text-sm text-body leading-6">
+          Quick guidance that helps your conversion land correctly—especially when you’re converting oven recipes into an air fryer.
+        </p>
+      </div>
+      <div class="hidden md:block rounded-2xl border border-hairline bg-canvas p-5">
+        <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Tip</div>
+        <div class="mt-2 text-sm font-semibold text-ink">
+          Check doneness 2–3 minutes early
+        </div>
+        <div class="mt-1 text-xs text-body">Air fryers vary—small adjustments beat overcooking.</div>
+      </div>
+    </div>
+
+    <div class="mt-10 grid gap-6 md:grid-cols-3">
+      {tips.map((t) => (
+        <article class="rounded-2xl border border-hairline bg-canvas p-6 shadow-[0px_1px_1px_rgba(0,0,0,0.03)]">
+          <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">{t.title}</div>
+          <p class="mt-3 text-sm text-body leading-6">{t.body}</p>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

@@ -1,0 +1,7 @@
+- [ ] Redesign `div id="result"` in `src/components/calculator/NewOvenToAirFryerCalculator.astro` to a single premium Apple-style card:
+  - [ ] Remove the two-card grid layout and replace with one `rounded-3xl bg-white shadow-lg p-8 text-center` card
+  - [ ] Keep IDs unchanged: `result`, `airTempC`, `airTempF`, `airTimeHuman`
+  - [ ] Keep JS logic / calculate() / listeners / formulas / presets unchanged
+  - [ ] Use requested typography/classes for Temperature, Fahrenheit secondary, Time, and spacing
+  - [ ] Add `transition-all duration-300` subtle reveal classes (no JS changes)
+- [ ] Run `npm run build` to verify

@@ -1,0 +1,62 @@
+---
+const sections = [
+	{
+		id: 'how-it-works',
+		eyebrow: 'How it works',
+		title: 'Oven recipes, converted in seconds',
+		body: 'Air fryers cook faster because they circulate hot air around food. That changes heat transfer—so you reduce temperature slightly and reduce time more aggressively. This converter applies a clear baseline rule and shows the formula so you can trust the output.',
+		points: ['Temperature: −20°C (or −25°F)', 'Time: ×0.8 (≈ 20% less)', 'Formulas shown + copyable results'],
+	},
+	{
+		id: 'temperature-guide',
+		eyebrow: 'Temperature guide',
+		title: 'Convert oven temperature to air fryer temp',
+		body: 'If you use the same oven temperature, the surface may brown too quickly in an air fryer. Start with the standard reduction, then adjust based on doneness rather than relying only on color.',
+		points: ['Preheat for better browning', 'Use cookware with airflow', 'Reduce in small steps if needed'],
+	},
+	{
+		id: 'time-guide',
+		eyebrow: 'Time guide',
+		title: 'Convert oven time to faster air fryer time',
+		body: 'Air frying reduces total cook time for many recipes, especially smaller pieces and preheated food. Start with ~20% less time and check a bit early—then fine-tune with one adjustment at a time.',
+		points: ['Start 2–3 minutes early', 'Avoid overcrowding', 'Shake/flip when appropriate'],
+	},
+	{
+		id: 'common-mistakes',
+		eyebrow: 'Common mistakes',
+		title: 'Avoid these conversion pitfalls',
+		body: 'Most conversion problems come from “clock-only” cooking, overcrowding, or skipping preheating. Use the formula as a starting point, then validate with doneness cues.',
+		points: ['Overcrowding = uneven cooking', 'No preheat = slower browning', 'No thermometer = uncertain safety'],
+	},
+];
+---
+
+<section class="bg-canvas-soft-2">
+  <div class="mx-auto max-w-7xl px-6 py-16 md:py-24">
+    <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Learn & convert</div>
+    <h2 class="mt-3 font-display text-display-md tracking-[-0.96px] text-ink">
+      Temperature + time conversions that actually work
+    </h2>
+    <p class="mt-4 max-w-2xl text-sm text-body leading-6">
+      Educational guidance for consistent results—from first conversion to confident adjustments.
+    </p>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      {sections.map((s) => (
+        <article class="rounded-2xl border border-hairline bg-canvas p-6 shadow-[0px_1px_1px_rgba(0,0,0,0.03)]" id={s.id}>
+          <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">{s.eyebrow}</div>
+          <h3 class="mt-2 font-display text-display-sm tracking-[-0.6px] text-ink">{s.title}</h3>
+          <p class="mt-3 text-sm text-body leading-6">{s.body}</p>
+          <ul class="mt-4 space-y-2">
+            {s.points.map((p) => (
+              <li class="flex items-start gap-2 text-sm text-body">
+                <span class="mt-1 inline-flex h-2 w-2 rounded-full bg-link" aria-hidden="true"></span>
+                <span>{p}</span>
+              </li>
+            ))}
+          </ul>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

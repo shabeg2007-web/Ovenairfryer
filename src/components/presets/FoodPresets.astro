@@ -1,0 +1,157 @@
+---
+const presets = [
+	{
+		id: 'chicken',
+		label: 'Chicken',
+		description: 'Crisp skin, tender inside—slightly stronger temp reduction for safer browning.',
+		tip: 'Chicken should reach an internal temperature of 75°C (165°F).',
+		deltaTempC: -5,
+		deltaTimeFactor: 0.95,
+	},
+	{
+		id: 'fries',
+		label: 'Fries',
+		description: 'Higher crisping power—use a touch less time reduction to avoid drying.',
+		tip: 'For extra crisp fries: shake or flip halfway through cooking.',
+		deltaTempC: -3,
+		deltaTimeFactor: 0.97,
+	},
+	{
+		id: 'frozen',
+		label: 'Frozen Foods',
+		description: 'Frozen items often lose heat—slightly less time reduction.',
+		tip: 'Cook until golden and piping hot; add 1–3 minutes if starting from a cold tray.',
+		deltaTempC: -2,
+		deltaTimeFactor: 0.98,
+	},
+	{
+		id: 'vegetables',
+		label: 'Vegetables',
+		description: 'Most veggies handle a bit more time—keep temp reduction standard.',
+		tip: 'Toss with oil first. Roast in a single layer for best browning.',
+		deltaTempC: -2,
+		deltaTimeFactor: 1.0,
+	},
+	{
+		id: 'fish',
+		label: 'Fish',
+		description: 'Delicate—reduce time slightly more to avoid drying.',
+		tip: 'Fish is done when it flakes easily and looks opaque in the thickest part.',
+		deltaTempC: -4,
+		deltaTimeFactor: 0.93,
+	},
+	{
+		id: 'beef',
+		label: 'Beef',
+		description: 'Keep juices—small temp reduction and modest time reduction.',
+		tip: 'For safety and doneness, use a thermometer; avoid overcooking.',
+		deltaTempC: -2,
+		deltaTimeFactor: 0.95,
+	},
+	{
+		id: 'pork',
+		label: 'Pork',
+		description: 'Slightly more forgiving—use standard time reduction with a gentle temp drop.',
+		tip: 'Pork should reach 63°C (145°F) with a short rest.',
+		deltaTempC: -2,
+		deltaTimeFactor: 0.96,
+	},
+	{
+		id: 'baked',
+		label: 'Baked Goods',
+		description: 'Gentle approach for cakes and pastries—reduce temp a bit more.',
+		tip: 'Check early. Air fryers brown faster—use the lightest bake when unsure.',
+		deltaTempC: -6,
+		deltaTimeFactor: 0.92,
+	},
+	{
+		id: 'pizza',
+		label: 'Pizza',
+		description: 'For crisp crust—use a standard temp reduction but preserve time.',
+		tip: 'Preheat the air fryer for best crust. Use a perforated rack if possible.',
+		deltaTempC: -2,
+		deltaTimeFactor: 0.99,
+	},
+];
+
+export type FoodPreset = (typeof presets)[number];
+
+export function getPresetById(id: string | null | undefined) {
+	if (!id) return null;
+	return presets.find((p) => p.id === id) ?? null;
+}
+
+export const defaultPresetId = 'chicken';
+---
+
+<div id="presets" class="mt-8">
+	<div class="flex items-center justify-between gap-4">
+		<div>
+			<div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Food presets</div>
+			<div class="mt-2 text-base font-semibold text-ink">Quick adjustments + tips</div>
+		</div>
+	</div>
+
+	<div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+		{presets.map((p) => (
+			<button
+				type="button"
+				class="preset-chip rounded-xl border border-hairline bg-canvas-soft px-4 py-3 text-left transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-canvas-soft"
+				data-preset-id={p.id}
+			>
+				<div class="text-sm font-semibold text-ink">{p.label}</div>
+				<div class="mt-1 text-xs leading-5 text-body">{p.description}</div>
+			</button>
+		))}
+	</div>
+
+	<div class="mt-5 rounded-2xl border border-hairline bg-canvas p-5">
+		<div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Smart cooking tip</div>
+		<p class="mt-2 text-sm leading-6 text-body">
+			Chicken should reach an internal temperature of 75°C (165°F).
+		</p>
+	</div>
+
+	<script is:inline>
+		// Client-side preset selection: we only change the tip text for now (calculator math is static server-rendered).
+		// In the next iteration we will sync preset deltas into URL state + computed results.
+		const container = document.getElementById('presets');
+		if (!container) return;
+
+		const chips = Array.from(container.querySelectorAll('.preset-chip'));
+		const tipTextEl = container.querySelector('p');
+
+		const tipsById = {
+			chicken: 'Chicken should reach an internal temperature of 75°C (165°F).',
+			fries: 'For extra crisp fries: shake or flip halfway through cooking.',
+			frozen: 'Cook until golden and piping hot; add 1–3 minutes if starting from a cold tray.',
+			vegetables: 'Toss with oil first. Roast in a single layer for best browning.',
+			fish: 'Fish is done when it flakes easily and looks opaque in the thickest part.',
+			beef: 'For safety and doneness, use a thermometer; avoid overcooking.',
+			pork: 'Pork should reach 63°C (145°F) with a short rest.',
+			baked: 'Check early. Air fryers brown faster—use the lightest bake when unsure.',
+			pizza: 'Preheat the air fryer for best crust. Use a perforated rack if possible.',
+		};
+
+		function setTip(presetId) {
+			const t = tipsById[presetId] || tipsById.chicken;
+			if (tipTextEl) tipTextEl.textContent = t;
+		}
+
+		for (const chip of chips) {
+			chip.addEventListener('click', () => {
+				const id = chip.getAttribute('data-preset-id');
+				chips.forEach((c) => c.classList.remove('ring-2', 'ring-link'));
+				chip.classList.add('ring-2', 'ring-link');
+				setTip(id);
+			});
+		}
+
+		// Default highlight
+		const defaultChip = chips.find((c) => c.getAttribute('data-preset-id') === 'chicken');
+		if (defaultChip) {
+			defaultChip.classList.add('ring-2', 'ring-link');
+			setTip('chicken');
+		}
+	</script>
+</div>

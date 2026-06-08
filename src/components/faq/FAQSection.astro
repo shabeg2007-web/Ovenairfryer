@@ -1,0 +1,117 @@
+---
+const faqs = [
+	{
+		q: 'What is the oven to air fryer conversion?',
+		a: 'The oven to air fryer conversion is the method of translating a conventional oven recipe into air fryer settings. Because air fryers circulate hot air faster, you typically lower the oven temperature slightly and reduce the cooking time. This oven to air fryer conversion approach helps match browning and doneness while reducing the risk of dry, overcooked results.',
+	},
+	{
+		q: 'How do I convert oven temperature to air fryer temperature?',
+		a: 'Use the oven to air fryer conversion baseline: reduce the oven temperature by about 20°C (or 25°F) when moving from a regular oven to an air fryer. For example, 200°C oven often converts to ~180°C. Then fine-tune based on how quickly the surface browns during the first few minutes so your oven temperature conversion for air fryer stays on target.',
+	},
+	{
+		q: 'Can I use the same cooking time in an air fryer?',
+		a: 'Usually, no. Air fryer cooking time is typically shorter because heat transfer is faster and food is surrounded by circulating air. Start with about 20% less time than the oven recipe, then check doneness early. Over time you’ll learn your air fryer cooking conversion chart “feel” for different foods and batch sizes.',
+	},
+	{
+		q: 'What is the oven to air fryer conversion in Celsius?',
+		a: 'In Celsius, a common starting point for oven to air fryer conversion is reducing oven temperature by ~20°C and reducing cooking time by about ~20%. For example, 200°C for 25 minutes in the oven often becomes ~180°C for about 20 minutes in an air fryer. Always verify with doneness cues like texture, color, and internal heat.',
+	},
+	{
+		q: 'What is the oven to air fryer conversion in Fahrenheit?',
+		a: 'In Fahrenheit, many oven to air fryer conversion answers follow a similar baseline: reduce the oven temperature by ~25°F and reduce cooking time by about ~20%. For example, 400°F in the oven often converts to around 375°F in an air fryer. Adjust early to avoid over-browning—especially with thinner cuts and preheated foods.',
+	},
+	{
+		q: 'Does a toaster oven convert the same way as an air fryer?',
+		a: 'A toaster oven to air fryer conversion can work with the same oven to air fryer conversion idea (slightly lower temperature and less time) as a starting point, but they don’t behave identically. Basket spacing, airflow, and size can change how quickly food browns. Check doneness earlier and tweak in small steps for more accurate results.',
+	},
+	{
+		q: 'Why are air fryer temperatures lower than oven temperatures?',
+		a: 'Air fryer temperatures are lower because air fryers use moving hot air to heat food more efficiently. That circulation shortens the time it takes for the exterior to brown and helps the inside reach cooking temperatures sooner. Lowering the set temperature reduces the chance of burning the outside before the interior is properly cooked.',
+	},
+	{
+		q: 'Can I convert any oven recipe to an air fryer recipe?',
+		a: 'Most oven recipes can be converted using the oven to air fryer conversion baseline—then verified for doneness. Crisp-friendly foods like fries, chicken, vegetables, and many baked goods convert especially well. For delicate dishes, convert in smaller batches and reduce time early, since airflow can change texture quickly compared to a regular oven to air fryer conversion.',
+	},
+
+	// Existing FAQs (kept for coverage)
+	{
+		q: 'How do I convert oven temperature to an air fryer?',
+		a: 'Use the oven to air fryer conversion rule: reduce the oven temperature by ~20°C (or ~25°F). For example, 200°C oven ≈ 180°C air fryer. This gives you a reliable starting point, then you can fine-tune based on browning in the first few minutes for your specific air fryer.',
+	},
+	{
+		q: 'How do I convert oven cooking time to an air fryer time?',
+		a: 'Air fryers cook faster because heat circulates more efficiently. Start with ~20% less time for your oven to air fryer conversion, and check doneness earlier than the original recipe. Example: 30 minutes oven ≈ 24 minutes air fryer (30 × 0.8).',
+	},
+	{
+		q: 'Why do air fryers cook faster?',
+		a: 'Air fryers circulate hot air around food, so the surface heats quickly and moisture is managed differently. That often reduces total cooking time as part of the oven to air fryer conversion process, especially for smaller pieces and preheated meals.',
+	},
+	{
+		q: 'Should I reduce cooking time?',
+		a: 'Yes—start ~20% lower than the oven time, then check doneness earlier. Air fryers vary by model and food type, so small adjustments are normal. This is the practical way to apply oven to air fryer conversion for more consistent results.',
+	},
+	{
+		q: 'Can I use oven recipes in an air fryer?',
+		a: 'Often, yes. Keep the same temperature and reduce time using the standard oven to air fryer conversion rule, then test doneness early. Avoid overcrowding and shake/flip halfway when possible for more even browning.',
+	},
+	{
+		q: 'What foods should not be air fried?',
+		a: 'Avoid delicate batter-drenched items unless you’re confident with your timing, and use caution with foods that produce excessive smoke or grease. When in doubt, follow your air fryer manual and cook smaller batches as part of a safer oven to air fryer conversion.',
+	},
+];
+---
+
+<section id="faq" class="bg-canvas">
+  <div class="mx-auto max-w-7xl px-6 py-16 md:py-24">
+    <div class="flex items-end justify-between gap-6">
+      <div>
+        <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">FAQ</div>
+        <h2 class="mt-3 font-display text-display-md tracking-[-0.96px] text-ink">Oven to air fryer conversion questions</h2>
+        <p class="mt-4 max-w-2xl text-sm text-body leading-6">
+          Clear, SEO-friendly answers to the questions people ask before converting recipes.
+        </p>
+      </div>
+
+      <div class="hidden md:block rounded-2xl border border-hairline bg-canvas-soft px-5 py-4">
+        <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">Reminder</div>
+        <div class="mt-2 text-sm font-semibold text-ink">Doneness beats the clock.</div>
+        <div class="mt-1 text-xs text-body">Check a few minutes early and adjust for your fryer + batch size.</div>
+      </div>
+    </div>
+
+    <div class="mt-10 grid gap-4 md:grid-cols-2">
+      {faqs.map((f) => (
+        <details
+          class="group rounded-2xl border border-hairline bg-canvas-soft p-5 shadow-[0px_1px_1px_rgba(0,0,0,0.02)] transition-colors"
+          >
+          <summary class="cursor-pointer list-none text-sm font-semibold text-ink">
+            <span class="pr-3 text-body group-open:font-semibold">Q.</span>
+            {f.q}
+          </summary>
+          <p class="mt-3 text-sm text-body leading-6">
+            {f.a}
+          </p>
+        </details>
+      ))}
+    </div>
+  </div>
+
+  <script type="application/ld+json">
+    {JSON.stringify(
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({
+          '@type': 'Question',
+          name: f.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: f.a,
+          },
+        })),
+      },
+      null,
+      2
+    )}
+  </script>
+</section>

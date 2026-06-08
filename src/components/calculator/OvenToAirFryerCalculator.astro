@@ -1,0 +1,371 @@
+---
+import { buildShareQuery } from '../../lib/share';
+import { presets, recalculate } from '../../lib/oven-airfryer-client';
+import ConversionResultCard from './ConversionResultCard.astro';
+
+type TimeMode = 'minutes' | 'hours_minutes';
+type TempUnit = 'C' | 'F';
+type PresetId = (typeof presets)[number]['id'];
+
+type State = {
+  tempUnit: TempUnit;
+  ovenTempC: number; // canonical oven temp in °C
+  ovenTimeMinutes: number; // canonical oven time in minutes
+  timeMode: TimeMode;
+  presetId: PresetId;
+};
+
+const initial: State = {
+  tempUnit: 'C',
+  ovenTempC: 200,
+  ovenTimeMinutes: 30,
+  timeMode: 'minutes',
+  presetId: 'chicken',
+};
+
+const url = new URL(Astro.url);
+const q = url.searchParams;
+
+function parseUnit(): TempUnit {
+  const u = q.get('tempUnit');
+  return u === 'F' ? 'F' : 'C';
+}
+
+function parseNumber(value: string | null, fallback: number) {
+  if (!value) return fallback;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+function roundMinutes(min: number) {
+  return Math.max(0, Math.round(min));
+}
+
+function cToF(c: number) {
+  return (c * 9) / 5 + 32;
+}
+
+function fToC(f: number) {
+  return ((f - 32) * 5) / 9;
+}
+
+function parseTimeMode(): TimeMode {
+  const m = q.get('timeMode');
+  return m === 'hours_minutes' ? 'hours_minutes' : 'minutes';
+}
+
+function parsePresetId(): PresetId {
+  const pid = q.get('preset');
+  const found = presets.find((p) => p.id === pid);
+  return (found?.id ?? initial.presetId) as PresetId;
+}
+
+const tempUnit = parseUnit();
+const timeMode = parseTimeMode();
+const presetId = parsePresetId();
+
+// Oven temp in URL is stored as numeric "oven" representing the unit selected (C/F).
+const ovenRaw = parseNumber(
+  q.get('oven'),
+  tempUnit === 'F' ? cToF(initial.ovenTempC) : initial.ovenTempC
+);
+
+const ovenTempC = tempUnit === 'C' ? ovenRaw : fToC(ovenRaw);
+
+// Oven time in URL: canonical minutes for conversion (stored in "time").
+let ovenTimeMinutes = parseNumber(q.get('time'), initial.ovenTimeMinutes);
+if (timeMode === 'hours_minutes') {
+  const hours = parseNumber(q.get('hours'), Math.floor(initial.ovenTimeMinutes / 60));
+  const minutes = parseNumber(q.get('minutes'), initial.ovenTimeMinutes % 60);
+  ovenTimeMinutes = hours * 60 + minutes;
+}
+
+// Validation / bounds (rounding happens once here)
+const safeOvenTempC = clamp(ovenTempC, 40, 260); // nearest whole degree via downstream rounding rules
+const safeOvenTimeMinutes = clamp(roundMinutes(ovenTimeMinutes), 0, 720);
+
+const safeState: State = {
+  tempUnit,
+  ovenTempC: safeOvenTempC,
+  ovenTimeMinutes: safeOvenTimeMinutes,
+  timeMode,
+  presetId,
+};
+
+// Single source of truth for calculation
+const calc = recalculate({
+  tempUnit: safeState.tempUnit,
+  ovenTempC: safeState.ovenTempC,
+  ovenTimeMinutes: safeState.ovenTimeMinutes,
+  presetId: safeState.presetId,
+});
+
+const result = calc.result;
+
+const shareQuery = buildShareQuery({
+  ovenTemp: safeState.tempUnit === 'C' ? safeState.ovenTempC : cToF(safeState.ovenTempC),
+  tempUnit: safeState.tempUnit,
+  ovenTimeMinutes: safeState.ovenTimeMinutes,
+  timeMode: safeState.timeMode,
+  ovenHours: safeState.timeMode === 'hours_minutes' ? Math.floor(safeState.ovenTimeMinutes / 60) : 0,
+  ovenMinutes:
+    safeState.timeMode === 'hours_minutes'
+      ? safeState.ovenTimeMinutes % 60
+      : safeState.ovenTimeMinutes,
+});
+---
+
+<section id="calculator" class="bg-canvas-soft">
+  <div class="mx-auto max-w-7xl px-6 py-10 md:py-14">
+    <div class="grid gap-6 lg:grid-cols-12 lg:items-start">
+      <div class="lg:col-span-7">
+        <div class="rounded-2xl border border-hairline bg-white/60 p-4 md:p-6 shadow-[0px_1px_1px_rgba(0,0,0,0.03)]">
+          <h2 class="text-display-md font-display text-ink tracking-[-0.8px]">Oven → Air Fryer</h2>
+          <p class="mt-2 text-sm text-body leading-6">Enter your oven temperature, time, and food preset.</p>
+
+          <form method="GET" action="/" id="calculator-form" class="mt-5 grid gap-5" aria-describedby="calc-status">
+            <input type="hidden" name="preset" value={presetId} />
+
+            <fieldset class="rounded-xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Temperature</legend>
+
+              <div class="mt-3 grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label for="ovenC" class="text-xs font-semibold text-mute font-mono">Oven (°C)</label>
+                  <input
+                    id="ovenC"
+                    name="ovenC"
+                    inputmode="numeric"
+                    type="number"
+                    min="40"
+                    max="260"
+                    step="1"
+                    value={Math.round(safeState.ovenTempC)}
+                    class="mt-2 w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
+                    aria-describedby="oven-error"
+                  />
+                </div>
+                <div>
+                  <label for="ovenF" class="text-xs font-semibold text-mute font-mono">Oven (°F)</label>
+                  <input
+                    id="ovenF"
+                    name="ovenF"
+                    inputmode="numeric"
+                    type="number"
+                    min="100"
+                    max="500"
+                    step="1"
+                    value={Math.round((safeState.ovenTempC * 9) / 5 + 32)}
+                    class="mt-2 w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
+                  />
+                </div>
+              </div>
+
+              <div id="oven-error" class="mt-2 hidden text-xs text-rose-600" role="alert" aria-live="polite"></div>
+            </fieldset>
+
+            <fieldset class="rounded-xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Cooking time</legend>
+
+              <div class="mt-3 grid gap-3">
+                <label class="text-sm font-medium text-ink">Minutes</label>
+                <input
+                  id="timeMinutes"
+                  name="time"
+                  inputmode="numeric"
+                  type="number"
+                  min="0"
+                  max="720"
+                  step="1"
+                  required
+                  value={safeState.ovenTimeMinutes}
+                  class="w-full rounded-lg border border-hairline bg-canvas px-3 py-2 text-sm font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
+                  aria-describedby="time-error"
+                />
+              </div>
+
+              <div id="time-error" class="mt-2 hidden text-xs text-rose-600" role="alert" aria-live="polite"></div>
+
+              <div id="calc-status" class="mt-2 text-xs text-body">Result appears after Calculate.</div>
+            </fieldset>
+
+            <fieldset class="rounded-xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Food preset</legend>
+
+              <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                {presets.map((p) => (
+                  <button
+                    type="button"
+                    class={`preset-chip rounded-xl border border-hairline bg-canvas px-4 py-3 text-left transition-colors hover:bg-canvas focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-canvas ${p.id === presetId ? 'ring-2 ring-link' : ''}`}
+                    data-preset-id={p.id}
+                    aria-pressed={p.id === presetId}
+                  >
+                    <div class="text-sm font-semibold text-ink">{p.label}</div>
+                  </button>
+                ))}
+              </div>
+            </fieldset>
+
+            <button
+              type="button"
+              id="calculate-btn"
+              class="inline-flex items-center justify-center rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-on-primary hover:opacity-90 transition-opacity focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-2 focus-visible:ring-offset-canvas"
+              aria-label="Calculate Air Fryer Settings"
+            >
+              Calculate Air Fryer Settings
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="lg:col-span-5">
+        <div class="sticky top-6">
+          <div id="result-wrap" class="hidden">
+            <ConversionResultCard result={result as any} shareQuery={shareQuery} />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" is:inline>
+      const form = document.getElementById('calculator-form');
+      const ovenC = document.getElementById('ovenC');
+      const ovenF = document.getElementById('ovenF');
+      const ovenError = document.getElementById('oven-error');
+      const timeError = document.getElementById('time-error');
+      const minutesInput = document.getElementById('timeMinutes');
+      const presetHidden = form.querySelector('input[name="preset"]');
+      const presetChips = Array.from(document.querySelectorAll('.preset-chip[data-preset-id]'));
+      const calculateBtn = document.getElementById('calculate-btn');
+      const resultWrap = document.getElementById('result-wrap');
+      const resultCard = document.getElementById('result-card');
+      const foodTypeEl = document.querySelector('[data-food-type]');
+
+      function cToF(c) {
+        return (c * 9) / 5 + 32;
+      }
+      function fToC(f) {
+        return ((f - 32) * 5) / 9;
+      }
+      function setHidden(el, hidden) {
+        if (!el) return;
+        el.classList.toggle('hidden', !!hidden);
+      }
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+      function showErr(el, msg) {
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('hidden', !msg);
+      }
+
+      function normalizeTempsOnCalculate() {
+        // Choose canonical values based on which input is non-empty / likely being edited.
+        // If both are present, prefer Celsius field unless it's empty.
+        const cVal = Number(ovenC?.value ?? NaN);
+        const fVal = Number(ovenF?.value ?? NaN);
+
+        const hasC = Number.isFinite(cVal);
+        const hasF = Number.isFinite(fVal);
+
+        // Validate + normalize based on whichever field is valid.
+        if (hasC) {
+          const safeC = clamp(cVal, 40, 260);
+          ovenC.value = String(Math.round(safeC));
+          ovenF.value = String(Math.round(cToF(safeC)));
+          showErr(ovenError, '');
+          return { ovenTempC: safeC };
+        }
+
+        if (hasF) {
+          const safeF = clamp(fVal, 100, 500);
+          ovenF.value = String(Math.round(safeF));
+          ovenC.value = String(Math.round(fToC(safeF)));
+          showErr(ovenError, '');
+          return { ovenTempC: fToC(safeF) };
+        }
+
+        showErr(ovenError, 'Enter a valid temperature (°C 40–260 or °F 100–500).');
+        return null;
+      }
+
+      function getTimeMinutesOnCalculate() {
+        const t = Number(minutesInput?.value ?? NaN);
+        if (!Number.isFinite(t)) return null;
+        const safe = clamp(t, 0, 720);
+        minutesInput.value = String(Math.round(safe));
+        showErr(timeError, '');
+        return safe;
+      }
+
+      function showResult() {
+        setHidden(resultWrap, false);
+        if (resultCard) {
+          resultCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          resultCard.classList.add('ring-2', 'ring-link');
+          window.setTimeout(() => resultCard.classList.remove('ring-2', 'ring-link'), 2000);
+        }
+      }
+
+      function setPresetUI(id) {
+        if (presetHidden) presetHidden.value = id;
+        for (const chip of presetChips) {
+          const chipId = chip.getAttribute('data-preset-id');
+          const active = chipId === id;
+          chip.classList.toggle('ring-2', active);
+          chip.classList.toggle('ring-link', active);
+          chip.setAttribute('aria-pressed', active ? 'true' : 'false');
+        }
+        if (foodTypeEl) {
+          const label = presetChips.find((c) => c.getAttribute('data-preset-id') === id)?.querySelector('.text-sm')?.textContent?.trim();
+          foodTypeEl.textContent = label || '—';
+        }
+      }
+
+      for (const chip of presetChips) {
+        chip.addEventListener('click', () => {
+          const id = chip.getAttribute('data-preset-id');
+          if (!id) return;
+          setPresetUI(id);
+        });
+      }
+
+      function calculateAndRender() {
+        const ovenTempCResult = normalizeTempsOnCalculate();
+        if (!ovenTempCResult) return;
+
+        const timeMinutes = getTimeMinutesOnCalculate();
+        if (timeMinutes === null) {
+          showErr(timeError, 'Enter a valid cooking time (0–720 minutes).');
+          return;
+        }
+
+        // Recompute using the shared calculation library on the client is not currently possible directly
+        // because it's server TS. Therefore we trigger a GET submit to SSR by writing values to the form inputs.
+        // This keeps a single calculation flow (SSR) and avoids duplicate JS math.
+        // The Calculate button should not navigate away permanently; SSR render updates the result instantly after navigation.
+        // To keep UX consistent without changing URL params manually, we submit the form normally.
+        setHidden(resultWrap, false);
+        showResult();
+
+        // Ensure presetHidden is set (already by setPresetUI).
+        form.submit();
+      }
+
+      calculateBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        calculateAndRender();
+      });
+
+      // Initial preset UI + hide result card
+      setHidden(resultWrap, true);
+      setPresetUI(presetHidden?.value || 'chicken');
+    </script>
+  </div>
+</section>
+

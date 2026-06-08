@@ -1,0 +1,442 @@
+ ---
+import { presets } from '../../lib/oven-airfryer-client';
+
+const presetsJson = JSON.stringify(presets);
+
+// Requirements:
+// - Brand new self-contained calculator
+// - No URL sync
+// - No SSR calculations
+// - No hidden state spans
+// - No page reloads
+// - No formula display
+// - No share/copy buttons
+// - Result hidden initially; shown only after Calculate
+//
+// Note: We reuse preset deltas (deltaTempC + deltaTimeFactor) from the existing client library,
+// but all calculations are done client-side.
+---
+
+<section id="new-oven-to-airfryer-calculator" class="bg-canvas-soft">
+  <div class="mx-auto max-w-7xl px-6 py-10 sm:py-14">
+    <header class="text-center space-y-3">
+      <div class="flex items-center justify-center gap-3">
+        <span aria-hidden="true" class="text-[18px] leading-none">🔥</span>
+        <h2 class="text-[40px] leading-[48px] font-display font-semibold text-ink tracking-[-1px]">
+          Oven ↔ Air Fryer
+        </h2>
+        <span aria-hidden="true" class="text-[18px] leading-none">💨</span>
+      </div>
+      <p class="text-base text-body leading-6 max-w-2xl mx-auto">
+        Convert temperatures and cooking times instantly.
+      </p>
+    </header>
+
+    <div class="mt-8 grid gap-6 lg:grid-cols-12 lg:items-start">
+      <!-- Inputs -->
+      <div class="lg:col-span-5 order-2 lg:order-1">
+        <div class="rounded-3xl bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-black/5 p-5 sm:p-6">
+          <form id="calc-form" class="grid gap-5" aria-describedby="calc-hint">
+            <fieldset class="rounded-2xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Temperature</legend>
+
+              <div class="mt-3 grid gap-3 sm:grid-cols-3">
+                <div class="sm:col-span-2">
+                  <label for="ovenTemp" id="ovenTempLabel" class="block text-sm font-semibold text-ink/90">Oven Temperature</label>
+                  <input
+                    id="ovenTemp"
+                    name="ovenTemp"
+                    type="number"
+                    inputmode="decimal"
+                    step="1"
+                    min="40"
+                    max="500"
+                    required
+                    class="mt-2 h-[58px] w-full rounded-2xl border border-hairline bg-white px-5 text-lg font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] placeholder:text-ink/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+                  />
+                </div>
+
+                <div>
+                  <label for="tempUnit" class="block text-sm font-semibold text-ink/90">Unit</label>
+                  <select
+                    id="tempUnit"
+                    name="tempUnit"
+                    class="mt-2 h-[58px] w-full rounded-2xl border border-hairline bg-white px-4 text-lg font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+                  >
+                    <option value="C" selected>C</option>
+                    <option value="F">F</option>
+                  </select>
+                </div>
+              </div>
+
+              <p id="temp-error" class="mt-2 hidden text-xs text-rose-600" role="alert" aria-live="polite"></p>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Time</legend>
+
+              <div class="mt-3">
+                <label for="ovenTimeMinutes" id="ovenTimeLabel" class="block text-sm font-semibold text-ink/90">Oven Time</label>
+                <input
+                  id="ovenTimeMinutes"
+                  name="ovenTimeMinutes"
+                  type="number"
+                  inputmode="numeric"
+                  step="1"
+                  min="0"
+                  max="720"
+                  required
+                  class="mt-2 h-[58px] w-full rounded-2xl border border-hairline bg-white px-5 text-lg font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] placeholder:text-ink/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+                />
+              </div>
+
+              <p id="time-error" class="mt-2 hidden text-xs text-rose-600" role="alert" aria-live="polite"></p>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Conversion</legend>
+
+              <div class="mt-3">
+                <label for="direction" class="block text-sm font-semibold text-ink/90">Choose conversion</label>
+                <select
+                  id="direction"
+                  name="direction"
+                  class="mt-2 h-[58px] w-full appearance-none rounded-2xl border border-hairline bg-white px-4 text-lg font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+                >
+                  <option value="oven_to_air" selected>Oven → Air Fryer</option>
+                  <option value="air_to_oven">Air Fryer → Oven</option>
+                </select>
+              </div>
+            </fieldset>
+
+            <fieldset class="rounded-2xl border border-hairline bg-canvas-soft p-4">
+              <legend class="px-1 text-xs font-semibold uppercase tracking-wide text-mute font-mono">Food</legend>
+
+              <div class="mt-3">
+                <label for="preset" class="block text-sm font-semibold text-ink/90">Select a food type</label>
+                <select
+                  id="preset"
+                  name="preset"
+                  class="mt-2 h-[58px] w-full appearance-none rounded-2xl border border-hairline bg-white px-4 text-lg font-semibold text-ink shadow-[0px_1px_1px_rgba(0,0,0,0.02)] focus:outline-none focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+                >
+                  <option value="chicken">Chicken</option>
+                  <option value="fries">Fries</option>
+                  <option value="frozen">Frozen Foods</option>
+                  <option value="vegetables">Vegetables</option>
+                  <option value="fish">Fish</option>
+                  <option value="beef">Beef</option>
+                  <option value="pork">Pork</option>
+                  <option value="pizza">Pizza</option>
+                  <option value="baked">Baked Goods</option>
+                </select>
+              </div>
+            </fieldset>
+
+            <button
+              type="button"
+              id="calc-btn"
+              class="w-full inline-flex h-[60px] items-center justify-center rounded-2xl bg-[#BA7517] px-4 text-[16px] font-semibold text-white shadow-[0px_10px_26px_rgba(186,117,23,0.28)] hover:opacity-95 transition-opacity focus-visible:ring-2 focus-visible:ring-link focus-visible:ring-offset-0"
+              aria-label="Calculate Air Fryer Settings"
+            >
+              Calculate
+            </button>
+
+            <div id="calc-hint" class="text-xs text-body">
+              Results update instantly after you click Calculate.
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Result (Hero) -->
+      <div class="lg:col-span-7 order-3 lg:order-2">
+        <div class="rounded-3xl bg-white shadow-[0px_1px_3px_rgba(0,0,0,0.06)] ring-1 ring-black/5 p-5 sm:p-6">
+          <div
+            class="rounded-3xl bg-white shadow-lg p-6 sm:p-8 text-center"
+          >
+            <div id="result" class="hidden transition-all duration-300">
+              <div class="space-y-7">
+                <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono" id="resultHeading">
+                  Recommended Settings
+                </div>
+
+                <div class="space-y-3">
+                  <div class="text-xs font-semibold text-mute font-mono" id="resultTempLabel">Air Fryer Temperature</div>
+                  <div class="mt-1 text-[72px] leading-[78px] font-bold tracking-[-2px] text-ink">
+                    <span id="airTempC" class="tabular-nums"></span>°C
+                  </div>
+                  <div class="mt-1 text-xl text-ink/60 font-medium">
+                    (≈ <span id="airTempF" class="tabular-nums"></span>°F)
+                  </div>
+                </div>
+
+                <div class="space-y-3">
+                  <div class="text-sm font-semibold text-mute font-mono" id="resultTimeLabel">Air Fryer Time</div>
+                  <div class="text-[44px] leading-[50px] font-semibold text-ink tabular-nums">
+                    <span id="airTimeHuman"></span>
+                  </div>
+                </div>
+
+                <div class="pt-1 flex items-center justify-center gap-2">
+                  <span aria-hidden="true" class="text-[16px]">✅</span>
+                  <div class="text-sm font-semibold text-ink/90">
+                    Ready to Cook
+                  </div>
+                </div>
+
+                <!-- Simple comparison (visual only) -->
+                <div class="mt-2 space-y-2">
+                  <div class="h-[1px] w-full bg-hairline" aria-hidden="true"></div>
+                  <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                    <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-canvas-soft border border-hairline">
+                      <span aria-hidden="true" class="text-body">🌡️</span>
+                      <span class="text-sm text-body font-semibold">Temperature</span>
+                    </div>
+                    <div class="flex items-center gap-2 px-4 py-2 rounded-2xl bg-canvas-soft border border-hairline">
+                      <span aria-hidden="true" class="text-body">⏱️</span>
+                      <span class="text-sm text-body font-semibold">Time</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="hidden lg:block mt-2">
+              <!-- keeps spacing premium even before result -->
+              <div aria-hidden="true" class="h-[340px] rounded-3xl bg-canvas-soft/70" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <section class="lg:col-span-12 order-4" aria-label="FAQ">
+        <h3 class="text-lg font-semibold text-ink">FAQ</h3>
+        <div class="mt-3 grid gap-3">
+          <details class="rounded-2xl border border-hairline bg-white/60 p-4 transition-all hover:bg-white/80">
+            <summary class="cursor-pointer text-sm font-semibold text-ink list-none">
+              How do I convert oven temperature to air fryer?
+            </summary>
+            <p class="mt-2 text-sm text-muted">Use the same preset, then apply the conversion automatically.</p>
+          </details>
+          <details class="rounded-2xl border border-hairline bg-white/60 p-4 transition-all hover:bg-white/80">
+            <summary class="cursor-pointer text-sm font-semibold text-ink list-none">
+              Why is air fryer cooking faster?
+            </summary>
+            <p class="mt-2 text-sm text-muted">Air circulation cooks food more efficiently.</p>
+          </details>
+          <details class="rounded-2xl border border-hairline bg-white/60 p-4 transition-all hover:bg-white/80">
+            <summary class="cursor-pointer text-sm font-semibold text-ink list-none">
+              Are these settings exact?
+            </summary>
+            <p class="mt-2 text-sm text-muted">They’re a close starting point—adjust if needed.</p>
+          </details>
+
+          <details class="rounded-2xl border border-hairline bg-white/60 p-4 transition-all hover:bg-white/80">
+            <summary class="cursor-pointer text-sm font-semibold text-ink list-none">
+              What is the conversion from oven to air fryer?
+            </summary>
+            <p class="mt-2 text-sm text-muted">
+              As a general rule, reduce the oven temperature by 20°C (or 25°F) and reduce the cooking time by about 20% when converting a recipe for an air fryer. For example, a recipe that calls for 200°C for 25 minutes in an oven would typically convert to 180°C for about 20 minutes in an air fryer. Actual cooking times may vary depending on the model and food type.
+            </p>
+          </details>
+        </div>
+      </section>
+    </div>
+
+    <script
+      type="application/json"
+      id="presets-data"
+      set:html={presetsJson}
+    ></script>
+
+    <script type="module" is:inline>
+      const presetsData = JSON.parse(
+        document.getElementById('presets-data').textContent
+      );
+
+
+      const byId = (id) => document.getElementById(id);
+
+      const directionSelect = byId('direction');
+      const tempInputLabel = byId('ovenTempLabel');
+      const timeInputLabel = byId('ovenTimeLabel');
+      const resultHeadingEl = byId('resultHeading');
+      const resultTempLabelEl = byId('resultTempLabel');
+      const resultTimeLabelEl = byId('resultTimeLabel');
+
+      const form = byId('calc-form');
+      const btn = byId('calc-btn');
+
+      const ovenTempInput = byId('ovenTemp');
+      const tempUnitSelect = byId('tempUnit');
+      const ovenTimeInput = byId('ovenTimeMinutes');
+      const presetSelect = byId('preset');
+
+      const tempErrorEl = byId('temp-error');
+      const timeErrorEl = byId('time-error');
+
+      const resultWrap = byId('result');
+      const airTempCEl = byId('airTempC');
+      const airTempFEl = byId('airTempF');
+      const airTimeHumanEl = byId('airTimeHuman');
+
+      function applyDirectionUI() {
+        const direction = directionSelect.value;
+
+        if (direction === 'air_to_oven') {
+          // Inputs: user should always know what they are entering
+          if (tempInputLabel) tempInputLabel.textContent = 'Air Fryer Temperature';
+          if (timeInputLabel) timeInputLabel.textContent = 'Air Fryer Time';
+
+          // Results: recommended settings heading + labels
+          if (resultHeadingEl) resultHeadingEl.textContent = 'Recommended Oven Settings';
+          if (resultTempLabelEl) resultTempLabelEl.textContent = 'Oven Temperature';
+          if (resultTimeLabelEl) resultTimeLabelEl.textContent = 'Oven Time';
+        } else {
+          if (tempInputLabel) tempInputLabel.textContent = 'Oven Temperature';
+          if (timeInputLabel) timeInputLabel.textContent = 'Oven Time';
+
+          if (resultHeadingEl) resultHeadingEl.textContent = 'Recommended Air Fryer Settings';
+          if (resultTempLabelEl) resultTempLabelEl.textContent = 'Air Fryer Temperature';
+          if (resultTimeLabelEl) resultTimeLabelEl.textContent = 'Air Fryer Time';
+        }
+      }
+
+      applyDirectionUI();
+
+      directionSelect.addEventListener('change', () => {
+        applyDirectionUI();
+      });
+
+      function clamp(n, min, max) {
+        return Math.min(max, Math.max(min, n));
+      }
+
+      function cToF(c) {
+        return (c * 9) / 5 + 32;
+      }
+
+      function formatMinutesHuman(mins) {
+        const m = Math.max(0, Math.round(mins));
+        const h = Math.floor(m / 60);
+        const rem = m % 60;
+        return h > 0 ? `${h} hr ${rem} min` : `${rem} min`;
+      }
+
+      function showErr(el, msg) {
+        if (!el) return;
+        el.textContent = msg || '';
+        el.classList.toggle('hidden', !msg);
+      }
+
+      function getPreset(id) {
+        return presetsData.find((p) => p.id === id) ?? presetsData[0];
+      }
+
+      function calculate() {
+        // Read inputs
+        const rawTemp = Number(ovenTempInput.value);
+        const unit = tempUnitSelect.value;
+        const rawTimeMin = Number(ovenTimeInput.value);
+        const presetId = presetSelect.value;
+        const direction = directionSelect.value;
+
+        // Validate temperature
+        let ovenTempC;
+        if (!Number.isFinite(rawTemp)) {
+          showErr(tempErrorEl, 'Enter a valid oven temperature.');
+          return;
+        }
+
+        if (unit === 'C') {
+          // Allowed range for UI rule: 40–260°C
+          if (rawTemp < 40 || rawTemp > 260) {
+            showErr(tempErrorEl, 'Temperature must be between 40°C and 260°C.');
+            return;
+          }
+          ovenTempC = rawTemp;
+        } else {
+          // Allowed range for UI rule: 100–500°F
+          if (rawTemp < 100 || rawTemp > 500) {
+            showErr(tempErrorEl, 'Temperature must be between 100°F and 500°F.');
+            return;
+          }
+          ovenTempC = ((rawTemp - 32) * 5) / 9;
+        }
+
+        // Validate time
+        if (!Number.isFinite(rawTimeMin)) {
+          showErr(timeErrorEl, 'Enter a valid cooking time in minutes.');
+          return;
+        }
+        if (rawTimeMin < 0 || rawTimeMin > 720) {
+          showErr(timeErrorEl, 'Time must be between 0 and 720 minutes.');
+          return;
+        }
+
+        showErr(tempErrorEl, '');
+        showErr(timeErrorEl, '');
+
+        // Preset adjustments applied AFTER base conversion (oven_to_air),
+        // or reversed first (air_to_oven), so that the math is reversible.
+        const preset = getPreset(presetId);
+        const deltaTempC = Number(preset.deltaTempC ?? 0);
+        const deltaTimeFactor = Number(preset.deltaTimeFactor ?? 1);
+
+        // Base conversion (no preset adjustments yet)
+        let airTempC;
+        let airTimeMin;
+
+        if (direction === 'air_to_oven') {
+          // Interpret user's temp/time as air fryer values, then reverse to oven values.
+          const airTempCIn = ovenTempC;
+          const airTimeMinIn = rawTimeMin;
+
+          console.log({
+            direction,
+            inputTempC: airTempCIn,
+            deltaTempC,
+            deltaTimeFactor
+          });
+
+          // Reverse preset adjustment first (NO self-referencing/shadowing)
+          const ovenTempCComputed = (airTempCIn - deltaTempC) + 20;
+
+          // Reverse base conversion after reversing preset
+          const ovenTimeMin = airTimeMinIn / (0.8 * deltaTimeFactor);
+
+          // For display spans we keep using airTempC/airTimeMin variable names,
+          // but when direction is air_to_oven we will display oven results in these spans.
+          airTempC = ovenTempCComputed;
+          airTimeMin = ovenTimeMin;
+        } else {
+          // oven_to_air
+          const airTempCBase = ovenTempC - 20;
+          const airTimeMinBase = rawTimeMin * 0.8;
+
+          // Preset adjustments applied AFTER base conversion
+          airTempC = airTempCBase + deltaTempC;
+          airTimeMin = airTimeMinBase * deltaTimeFactor;
+        }
+
+        // Display (only after Calculate)
+        airTempCEl.textContent = String(Math.round(airTempC));
+        airTempFEl.textContent = String(Math.round(cToF(airTempC)));
+        airTimeHumanEl.textContent = formatMinutesHuman(airTimeMin);
+
+        if (!resultWrap) return;
+
+        resultWrap.classList.remove('hidden');
+      }
+
+      btn.addEventListener('click', () => {
+        calculate();
+      });
+
+      // Start with hidden results
+      resultWrap.classList.add('hidden');
+    </script>
+  </div>
+</section>
+

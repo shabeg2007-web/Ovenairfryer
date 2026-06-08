@@ -1,0 +1,56 @@
+---
+import type { ConversionOutput } from '../../lib/conversion';
+
+type Props = {
+  result: ConversionOutput;
+  shareQuery: string;
+};
+
+const { result } = Astro.props;
+
+const displayHours = Math.floor(result.airTimeMinutes / 60);
+const displayMinutes = result.airTimeMinutes % 60;
+const timeHuman = displayHours > 0 ? `${displayHours} hr ${displayMinutes} min` : `${displayMinutes} min`;
+
+const foodNote = 'Check food 2–3 minutes before time completes.';
+---
+
+<section
+  class="mt-6 rounded-2xl border border-hairline bg-canvas p-6 shadow-[0px_1px_1px_rgba(0,0,0,0.03)]"
+  id="result-card"
+  aria-live="polite"
+>
+  <div class="text-xs font-semibold uppercase tracking-wide text-mute font-mono">
+    Air Fryer Settings
+  </div>
+
+  <div class="mt-4 grid gap-4">
+    <div class="rounded-xl border border-hairline bg-canvas-soft p-4">
+      <div class="text-sm text-mute font-medium">Air Fryer Temperature</div>
+      <div class="mt-1 text-4xl sm:text-5xl font-bold text-ink tracking-[-1px]">
+        <span data-air-temp-c>{result.airTempC}</span>°C
+        <span class="ml-2 text-body font-semibold text-ink/70">
+          (≈ <span data-air-temp-f>{result.airTempF}</span>°F)
+        </span>
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-hairline bg-canvas-soft p-4">
+      <div class="text-sm text-mute font-medium">Air Fryer Time</div>
+      <div class="mt-1 text-4xl sm:text-5xl font-bold text-ink tracking-[-1px]" data-air-time-human>
+        {timeHuman}
+      </div>
+    </div>
+
+    <div class="rounded-xl border border-hairline bg-canvas-soft p-4">
+      <div class="text-sm text-mute font-medium">Food Type</div>
+      <div class="mt-1 text-base sm:text-lg font-semibold text-ink tracking-[-0.2px]" data-food-type>
+        —
+      </div>
+      <div class="mt-2 text-xs text-body leading-5">
+        {foodNote}
+      </div>
+    </div>
+  </div>
+</section>
+
